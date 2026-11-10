@@ -1,4 +1,4 @@
-# 借光小街
+# 借光街
 
 一款用手提灯与日常物件拼出真实投影的皮影小游戏。沿小街前进，操作机关和晾衣绳，在最后的房间里让钟、大衣、椅子与收拢雨伞形成“归人”。
 
@@ -25,7 +25,7 @@ Windows ZIP 与 WebGL 产物均作为 **GitHub Release 附件**保存，避免�
 
 将本地验证通过的 WebGL 导出压成固定名称 `BorrowedLightStreet-WebGL.zip` 并上传到对应 Release。ZIP 根目录应直接包含 `index.html`、`Build/` 和导出所需的其他文件；也接受单个外层目录。`release.json` 保存已验证的 Release tag 与 ZIP 的 SHA256。工作流下载该附件，核对 SHA256，再安全解压为临时 `web/` 目录，仅上传这个站点到 Pages。`web/` 不入 Git。
 
-本地配置命令：`Tools/Set-GitHubPagesRelease.ps1 -Tag <版本标签> -WebGLZip <已验证ZIP路径>`。该命令只写独立发布目录的 `release.json`，不登录或操作远程仓库。也可在 Actions 的 **Run workflow** 输入 `tag`、`sha256`；留空时使用仓库配置。
+维护者在本地 Unity 原工程执行：`Tools/Set-GitHubPagesRelease.ps1 -Tag <版本标签> -WebGLZip <已验证ZIP路径>`。这些维护工具不包含在公开发行仓库中。该命令只写独立发布目录的 `release.json`，不登录或操作远程仓库。也可在 Actions 的 **Run workflow** 输入 `tag`、`sha256`；留空时使用仓库配置。
 
 仓库默认分支使用 `main`。在 GitHub 仓库 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**。上传 Release 附件并提交正确的 `release.json` 后会自动部署，也可手动运行工作流。仓库本身作为独立发布根目录，不要在 Unity 工程根目录执行发布提交。未设置已验证 tag/hash 时，工作流会拒绝空发布。
 
