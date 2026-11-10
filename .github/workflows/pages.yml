@@ -1,0 +1,120 @@
+name: Publish verified WebGL to Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'release.json'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag; empty uses release.json'
+        required: false
+        type: string
+      sha256:
+        description: 'Expected WebGL ZIP SHA256; empty uses release.json'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out the standalone distribution repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Read the verified Release selection
+        id: release
+        shell: python
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_SHA256: ${{ inputs.sha256 }}
+        run: |
+          import json, os, re
+          from pathlib import Path
+          config = json.loads(Path('release.json').read_text(encoding='utf-8-sig'))
+          tag = os.environ.get('INPUT_TAG', '').strip() or config.get('tag', '')
+          sha = (os.environ.get('INPUT_SHA256', '').strip() or config.get('webglSha256', '')).lower()
+          if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._/-]{0,199}', tag):
+              raise SystemExit('Set a verified Release tag in release.json or workflow_dispatch.')
+          if not re.fullmatch(r'[0-9a-f]{64}', sha):
+              raise SystemExit('Set the locally verified WebGL ZIP SHA256 before deployment.')
+          if config.get('webglAsset') != 'BorrowedLightStreet-WebGL.zip':
+              raise SystemExit('The WebGL Release asset must use its fixed distribution name.')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              output.write(f'tag={tag}\nsha256={sha}\n')
+      - name: Download the WebGL Release asset
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/pages-download"
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern 'BorrowedLightStreet-WebGL.zip' --dir "$RUNNER_TEMP/pages-download"
+      - name: Verify SHA256 and safely unpack only the WebGL site
+        shell: python
+        env:
+          EXPECTED_SHA256: ${{ steps.release.outputs.sha256 }}
+        run: |
+          import hashlib, os, shutil, stat, zipfile
+          from pathlib import Path, PurePosixPath
+          archive = Path(os.environ['RUNNER_TEMP']) / 'pages-download/BorrowedLightStreet-WebGL.zip'
+          with archive.open('rb') as stream:
+              digest = hashlib.file_digest(stream, 'sha256').hexdigest()
+          if digest != os.environ['EXPECTED_SHA256']:
+              raise SystemExit('WebGL Release ZIP SHA256 mismatch; nothing was deployed.')
+          unpack = Path(os.environ['RUNNER_TEMP']) / 'pages-unpack'
+          unpack.mkdir()
+          forbidden = {'.cs', '.unity', '.prefab', '.meta', '.log', '.ps1', '.pdb', '.mdb'}
+          with zipfile.ZipFile(archive) as package:
+              for info in package.infolist():
+                  name = info.filename.replace('\\', '/')
+                  path = PurePosixPath(name)
+                  if path.is_absolute() or '..' in path.parts or ':' in name or stat.S_ISLNK(info.external_attr >> 16):
+                      raise SystemExit(f'Unsafe archive member: {name}')
+                  if path.suffix.lower() in forbidden or path.name.lower().startswith(('scene-layout-overrides', 'runtime-verify', 'runtime-reload')):
+                      raise SystemExit(f'Source/private/test file inside WebGL archive: {name}')
+              for info in package.infolist():
+                  path = PurePosixPath(info.filename.replace('\\', '/'))
+                  target = unpack.joinpath(*path.parts)
+                  if info.is_dir() or info.filename.endswith(('/', '\\')):
+                      target.mkdir(parents=True, exist_ok=True)
+                  else:
+                      target.parent.mkdir(parents=True, exist_ok=True)
+                      with package.open(info) as source, target.open('wb') as output:
+                          shutil.copyfileobj(source, output)
+          site = unpack
+          if not (site / 'index.html').is_file():
+              children = list(unpack.iterdir())
+              if len(children) != 1 or not children[0].is_dir():
+                  raise SystemExit('WebGL ZIP must have index.html at its root, or one enclosing directory.')
+              site = children[0]
+          if not (site / 'index.html').is_file() or not (site / 'Build').is_dir():
+              raise SystemExit('The verified archive does not contain a complete Unity WebGL export.')
+          shutil.copytree(site, 'web', dirs_exist_ok=True)
+          print(f'Verified {digest}; selected only the WebGL export for Pages.')
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload only the verified WebGL files
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: web/
+          retention-days: 1
+      - name: Deploy the Pages artifact
+        id: deployment
+        uses: actions/deploy-pages@v5
