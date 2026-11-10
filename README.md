@@ -2,7 +2,7 @@
 
 在雨夜的小街提灯前行，用光与影搭出道路，移动日常物件，解开街巷中的机关。
 
-**[在线试玩](https://doyitnow.github.io/borrowed-light-street/)** · **[下载 Windows 版](https://github.com/DoYitNow/borrowed-light-street/releases/latest)**
+**[在线试玩](https://doyitnow.github.io/borrowed-light-street/)** · **[下载 Windows 版](https://github.com/DoYitNow/borrowed-light-street/releases/download/v0.1.0-preview.1/BorrowedLightStreet-Windows-2026.11.10-192828.zip)**
 
 ![借光街试玩画面](preview.png)
 

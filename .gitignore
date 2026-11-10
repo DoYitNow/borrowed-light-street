@@ -10,8 +10,7 @@
 /Tools/
 /Build/
 /releases/
-/web/*
-!/web/.gitkeep
+/web/
 *.zip
 *.log
 *.pdb
