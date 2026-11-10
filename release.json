@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "tag": "v0.1.0-preview.1",
+  "tag": "v0.1.0-preview.2",
   "webglAsset": "BorrowedLightStreet-WebGL.zip",
-  "webglSha256": "4c37e549309ec27c97798a6eb5b46e4662bb138fc52d8eb7b4b15ec6d36c73fb"
+  "webglSha256": "efb58f622736003643cf2b3dc06a93b0418faca649d1711ace72beeb16c6d144"
 }

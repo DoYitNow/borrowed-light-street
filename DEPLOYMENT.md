@@ -31,6 +31,6 @@ Windows ZIP 与 WebGL 产物均作为 **GitHub Release 附件**保存，避免�
 
 仓库默认分支使用 `main`。在 GitHub 仓库 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**。上传 Release 附件并提交正确的 `release.json` 后会自动部署，也可手动运行工作流。仓库本身作为独立发布根目录，不要在 Unity 工程根目录执行发布提交。未设置已验证 tag/hash 时，工作流会拒绝空发布。
 
-Windows 安装包由本地 `Tools/Package-GitHubRelease.ps1` 从交付证书指定的发行目录生成，位于工程旁的 `Publish/WindowsRelease/<版本>/`。将其中 ZIP、SHA256 与清单作为 Release 附件上传，避免 Git 的大文件限制。
+维护者在本地原工程执行 `Tools/Build-InteractionRevision.ps1 -Validate` 后，使用 `Tools/Package-GitHubRelease.ps1 -DeliveryPath Validation/InteractionRevision/delivery.json` 从交付证书指定的发行目录生成 Windows 包，输出为 `Publish/WindowsRelease/<版本>/`。将其中 ZIP、SHA256 与清单作为 Release 附件上传，避免 Git 的大文件限制。
 
 Pages 工作流采用官方 [upload-pages-artifact](https://github.com/actions/upload-pages-artifact) 与 [deploy-pages](https://github.com/actions/deploy-pages)，只需要仓库默认的 `GITHUB_TOKEN`；不在仓库写入个人访问令牌。
