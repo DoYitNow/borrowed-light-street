@@ -1,0 +1,21 @@
+# This folder is a distribution repository, never a Unity source checkout.
+/Assets/
+/ArtSource/
+/Library/
+/Packages/
+/ProjectSettings/
+/UserSettings/
+/Validation/
+/Logs/
+/Tools/
+/Build/
+/releases/
+/web/*
+!/web/.gitkeep
+*.zip
+*.log
+*.pdb
+*.mdb
+*.dmp
+.DS_Store
+Thumbs.db
